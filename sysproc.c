@@ -90,9 +90,25 @@ sys_uptime(void)
   return xticks;
 }
 
-int sys_hello(int arg) {
+int sys_hello(void) {
   int n;
   if (argint(0, &n) < 0) return -1;
   cprintf("Hello world %d\n", n);
   return 0;
 }
+
+int sys_setprior(void) {
+  int pid, newPrior;
+  if(argint(0, &pid) < 0) return -1;
+  if(argint(1, &newPrior) < 0) return -1;
+
+  cli();
+  struct proc* me = myproc();
+  sti();
+
+  me->priority = newPrior;
+  cprintf("Set the priority for pid%d to %d\n", pid, newPrior);
+
+  return 0;
+}
+

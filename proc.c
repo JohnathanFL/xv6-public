@@ -65,6 +65,34 @@ myproc(void) {
   return p;
 }
 
+
+static void
+swap_procs(struct proc* left, struct proc* right) {
+  if(left == right)
+    return;
+
+  struct proc tmp = *left;
+  *left = *right;
+  *right = tmp;
+}
+
+void
+sort_procs(void) {
+  //// Assume we already have the ptable lock.
+  //acquire(&ptable.lock);
+  //// Simple find-greatest and swap sort
+  for(int i = 0; i < NPROC; i++) {
+    struct proc *greatest = &ptable.proc[i];
+    for(int j = i; j < NPROC; j++) {
+      //// non-runnable procs are considered lowest priority
+      if (ptable.proc[j].state == RUNNABLE && ptable.proc[j].priority > greatest->priority)
+        greatest = &ptable.proc[j];
+    }
+    swap_procs(greatest, &ptable.proc[i]);
+  }
+
+  //release(&ptable.lock);
+}
 //PAGEBREAK: 32
 // Look in the process table for an UNUSED proc.
 // If found, change state to EMBRYO and initialize
@@ -88,7 +116,9 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-
+  p->priority = 50; //// Use 50 as default. This way we can denote
+  //// lower and higher than average priority
+  sort_procs();
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -111,9 +141,11 @@ found:
   p->context = (struct context*)sp;
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
-
+  
   return p;
 }
+
+
 
 //PAGEBREAK: 32
 // Set up first user process.
@@ -330,6 +362,10 @@ scheduler(void)
     // Enable interrupts on this processor.
     sti();
 
+    //// Make sure we're in priority order
+    sort_procs();
+    //// With the procs sorted, everything else is business as usual
+    
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
