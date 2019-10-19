@@ -6,5 +6,5 @@
 
 int main() {
   hello(5);
-  return 0;
+  exit();
 }
