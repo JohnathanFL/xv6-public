@@ -4,6 +4,7 @@
 #include "user.h"
 #include "fcntl.h"
 
+
 // Parsed command representation
 #define EXEC 1
 #define REDIR 2
@@ -70,7 +71,10 @@ void runcmd(struct cmd* cmd) {
   if (cmd == 0) exit();
 
   switch (cmd->type) {
-  default: panic("runcmd");
+  default: {
+    printf(1, "Unexpected cmdtype: %d", cmd->type);
+    panic("runcmd");
+    }
 
   case EXEC:
     ecmd = &cmd->exec;
@@ -120,7 +124,7 @@ void runcmd(struct cmd* cmd) {
     break;
 
   case BACK:
-    bcmd = &cmd->cmd;
+    bcmd = &cmd->back;
     if (fork1() == 0) runcmd(bcmd->cmd);
     break;
   }
@@ -370,7 +374,7 @@ struct cmd* parseexec(char** ps, char* es) {
   if (peek(ps, es, "(")) return parseblock(ps, es);
 
   ret = execcmd();
-  cmd = (struct execcmd*)ret;
+  cmd = &ret->exec;
 
   argc = 0;
   ret  = parseredirs(ret, ps, es);
@@ -401,30 +405,30 @@ struct cmd* nulterminate(struct cmd* cmd) {
 
   switch (cmd->type) {
   case EXEC:
-    ecmd = (struct execcmd*)cmd;
+    ecmd = &cmd->exec;
     for (i = 0; ecmd->argv[i]; i++) *ecmd->eargv[i] = 0;
     break;
 
   case REDIR:
-    rcmd = (struct redircmd*)cmd;
+    rcmd = &cmd->redir;
     nulterminate(rcmd->cmd);
     *rcmd->efile = 0;
     break;
 
   case PIPE:
-    pcmd = (struct pipecmd*)cmd;
+    pcmd = &cmd->pipe;
     nulterminate(pcmd->left);
     nulterminate(pcmd->right);
     break;
 
   case LIST:
-    lcmd = (struct listcmd*)cmd;
+    lcmd = &cmd->list;
     nulterminate(lcmd->left);
     nulterminate(lcmd->right);
     break;
 
   case BACK:
-    bcmd = (struct backcmd*)cmd;
+    bcmd = &cmd->back;
     nulterminate(bcmd->cmd);
     break;
   }
