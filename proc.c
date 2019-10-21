@@ -81,14 +81,18 @@ sort_procs(void) {
   //// Assume we already have the ptable lock.
   //acquire(&ptable.lock);
   //// Simple find-greatest and swap sort
-  for(int i = 0; i < NPROC; i++) {
-    struct proc *greatest = &ptable.proc[i];
-    for(int j = i; j < NPROC; j++) {
+  //// We begin after the init process (which should be first in the list)
+  for(struct proc* begin = ptable.proc + 1; begin < &ptable.proc[NPROC]; begin++) {
+    struct proc *greatest = begin;
+    for(struct proc* cur = begin; cur < &ptable.proc[NPROC]; cur++) {
       //// non-runnable procs are considered lowest priority
-      if (ptable.proc[j].state == RUNNABLE && ptable.proc[j].priority > greatest->priority)
-        greatest = &ptable.proc[j];
+      if (cur->state == RUNNABLE && cur->priority > greatest->priority)
+        greatest = cur;
     }
-    swap_procs(greatest, &ptable.proc[i]);
+    if(greatest != begin && greatest->name && begin) {
+      //cprintf("Swapped %s with %s\n", greatest->name, ptable.proc[i].name);
+      swap_procs(greatest, begin);
+    }
   }
 
   //release(&ptable.lock);
@@ -296,6 +300,10 @@ exit(void)
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
   sched();
+
+  //// To be clear, this should never run.
+  //// If it does, it means that something else managed to run an exit()
+  //// from inside sched, which should not happen.
   panic("zombie exit");
 }
 
@@ -371,7 +379,7 @@ scheduler(void)
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
-
+     //// cprintf("Swapping to %s\n", p->name);
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
@@ -403,7 +411,7 @@ sched(void)
 {
   int intena;
   struct proc *p = myproc();
-
+  ////cprintf("sched's proc's name is %s\n\n", p->name);
   if(!holding(&ptable.lock))
     panic("sched ptable.lock");
   if(mycpu()->ncli != 1)
