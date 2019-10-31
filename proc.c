@@ -532,3 +532,14 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+int cps() {
+  struct proc* p;
+  sti();
+  acquire(&ptable.lock);
+  cprintf("name \t pid \t state \t \n");
+
+  procdump();
+  release(&ptable.lock);
+  return 23;
+}

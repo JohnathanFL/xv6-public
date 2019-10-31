@@ -96,3 +96,7 @@ int sys_hello(int arg) {
   cprintf("Hello world %d\n", n);
   return 0;
 }
+
+int sys_cps(void) {
+  return cps();
+}
