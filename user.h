@@ -1,3 +1,4 @@
+#pragma once
 struct stat;
 struct rtcdate;
 
