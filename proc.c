@@ -101,7 +101,7 @@ static struct proc* allocproc(void) {
 found:
   p->state    = EMBRYO;
   p->pid      = nextpid++;
-  p->priority = 50;  //// Use 50 as default. This way we can denote
+  p->priority = 10;  //// Use 50 as default. This way we can denote
   //// lower and higher than average priority
   sort_procs();
   release(&ptable.lock);
@@ -500,4 +500,13 @@ void procdump(void) {
     }
     cprintf("\n");
   }
+}
+
+struct proc* get_proc(int pid) {
+  for(struct proc* p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if(p->state == UNUSED) continue;
+    if(p->pid == pid) return p;
+  }
+
+  return 0;
 }

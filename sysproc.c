@@ -77,10 +77,10 @@ int sys_chpr(void) {
   if (argint(1, &newPrior) < 0) return -1;
 
   cli();
-  struct proc* me = myproc();
+  struct proc* p = get_proc(pid);
   sti();
 
-  me->priority = newPrior;
+  p->priority = newPrior;
   cprintf("Set the priority for pid%d to %d\n", pid, newPrior);
 
   return 0;
