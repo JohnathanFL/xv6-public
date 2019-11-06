@@ -4,7 +4,7 @@
 
 
 int main() {
-  setprior(getpid(), 100);
+  chpr(getpid(), 100);
   for (int i = 0; i < 10000; i++)
     ;
 

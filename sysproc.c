@@ -71,7 +71,7 @@ int sys_hello(void) {
   return 0;
 }
 
-int sys_setprior(void) {
+int sys_chpr(void) {
   int pid, newPrior;
   if (argint(0, &pid) < 0) return -1;
   if (argint(1, &newPrior) < 0) return -1;
