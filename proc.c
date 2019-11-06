@@ -54,33 +54,6 @@ struct proc* myproc(void) {
 }
 
 
-static void swap_procs(struct proc* left, struct proc* right) {
-  if (left == right) return;
-
-  struct proc tmp = *left;
-  *left           = *right;
-  *right          = tmp;
-}
-
-void sort_procs(void) {
-  //// Assume we already have the ptable lock.
-  // acquire(&ptable.lock);
-  //// Simple find-greatest and swap sort
-  //// We begin after the init process (which should be first in the list)
-  for (struct proc* begin = ptable.proc + 1; begin < &ptable.proc[NPROC]; begin++) {
-    struct proc* greatest = begin;
-    for (struct proc* cur = begin; cur < &ptable.proc[NPROC]; cur++) {
-      //// non-runnable procs are considered lowest priority
-      if (cur->state == RUNNABLE && cur->priority > greatest->priority) greatest = cur;
-    }
-    if (greatest != begin && greatest->name && begin) {
-      // cprintf("Swapped %s with %s\n", greatest->name, ptable.proc[i].name);
-      swap_procs(greatest, begin);
-    }
-  }
-
-  // release(&ptable.lock);
-}
 // PAGEBREAK: 32
 // Look in the process table for an UNUSED proc.
 // If found, change state to EMBRYO and initialize
@@ -103,7 +76,6 @@ found:
   p->pid      = nextpid++;
   p->priority = 10;  //// Use 50 as default. This way we can denote
   //// lower and higher than average priority
-  sort_procs();
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -321,7 +293,6 @@ int wait(void) {
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
 void scheduler(void) {
-  struct proc* p;
   struct cpu*  c = mycpu();
   c->proc        = 0;
 
@@ -330,22 +301,31 @@ void scheduler(void) {
     sti();
 
     //// Make sure we're in priority order
-    sort_procs();
     //// With the procs sorted, everything else is business as usual
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+
+    
+    struct proc* highest = ptable.proc;
+    
+    for (struct proc* p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
       if (p->state != RUNNABLE) continue;
+      if (highest->state != RUNNABLE || highest->priority < p->priority) highest = p;
+    }
+
+    //// As far as I can tell, this function ends up running before the init process
+    //// even exists. Thus, if we blindly swap, we get that annoying kstack error
+    if(highest->state == RUNNABLE) {
       //// cprintf("Swapping to %s\n", p->name);
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
+      c->proc = highest;
+      switchuvm(highest);
+      highest->state = RUNNING;
 
-      swtch(&(c->scheduler), p->context);
+      swtch(&(c->scheduler), highest->context);
       switchkvm();
 
       // Process is done running for now.
@@ -487,13 +467,14 @@ void procdump(void) {
   char*        state;
   uint         pc[10];
 
+  cprintf("\n");
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
     if (p->state == UNUSED) continue;
     if (p->state >= 0 && p->state < NELEM(states) && states[p->state])
       state = states[p->state];
     else
       state = "???";
-    cprintf("%d %s %s", p->pid, state, p->name);
+    cprintf("PID=%d STATE=%s PRIOR=%d NAME=%s", p->pid, state, p->priority, p->name);
     if (p->state == SLEEPING) {
       getcallerpcs((uint*)p->context->ebp + 2, pc);
       for (i = 0; i < 10 && pc[i] != 0; i++) cprintf(" %p", pc[i]);
