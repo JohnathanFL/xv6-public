@@ -10,9 +10,8 @@ int main(int argc, char** argv) {
       printf(1, "Failed to fork!\n");
     } else if (id == 0) {
       //printf(1, "Child checking in\n");
-      chpr(getpid(), 20);
       int tmp = 1;
-      for(int i = 0; i < 100000000; i++) tmp = i * 1 / 10 * 50;
+      for(int i = 0; i < 10000000000; i++) tmp = i * 1 / 10 * 50;
       consume(tmp);
       break;
     } else {
