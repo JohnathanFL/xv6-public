@@ -3,7 +3,7 @@
 void consume(int t) {t += 1;}
 
 int main(int argc, char** argv) {
-  int n = 3;
+  int n = atoi(argv[1]);
   for(int k = 0; k < n; k++) {
     int id = fork();
     if(id < 0) {
