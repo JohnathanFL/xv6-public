@@ -29,6 +29,7 @@ int   uptime(void);
 int   hello(int);
 //// Set priority for pid to prior
 int chpr(int, int);
+int cps(void);
 
 // ulib.c
 int   stat(const char*, struct stat*);

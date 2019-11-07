@@ -23,3 +23,4 @@
 #define SYS_close 21
 #define SYS_hello 22
 #define SYS_chpr 23
+#define SYS_cps 24

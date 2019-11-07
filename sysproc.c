@@ -85,3 +85,8 @@ int sys_chpr(void) {
 
   return 0;
 }
+
+int sys_cps(void) {
+  procdump();
+  return 0;
+}
