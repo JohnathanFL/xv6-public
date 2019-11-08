@@ -503,8 +503,8 @@ int chpr(int pid, int newPrior) {
     return -1;
   }
 
-  if (p->state != RUNNING && p->state != RUNNABLE) {
-    cprintf("Can only set priority of a Run{ning, able} process!\n");
+  if (p->state != RUNNING && p->state != RUNNABLE && p->state != SLEEPING) {
+    cprintf("Can only set priority of a Run{ning, able} or sleeping process!\n");
     return -1;
   }
   p->priority = newPrior;
