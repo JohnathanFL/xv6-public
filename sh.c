@@ -74,7 +74,7 @@ void runcmd(struct cmd* cmd) {
   default: {
     printf(1, "Unexpected cmdtype: %d", cmd->type);
     panic("runcmd");
-    }
+  }
 
   case EXEC:
     ecmd = &cmd->exec;

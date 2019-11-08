@@ -293,8 +293,8 @@ int wait(void) {
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
 void scheduler(void) {
-  struct cpu*  c = mycpu();
-  c->proc        = 0;
+  struct cpu* c = mycpu();
+  c->proc       = 0;
 
   for (;;) {
     // Enable interrupts on this processor.
@@ -305,9 +305,9 @@ void scheduler(void) {
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    
+
     struct proc* highest = ptable.proc;
-    
+
     for (struct proc* p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
       if (p->state != RUNNABLE) continue;
       if (highest->state != RUNNABLE || highest->priority < p->priority) highest = p;
@@ -315,7 +315,7 @@ void scheduler(void) {
 
     //// As far as I can tell, this function ends up running before the init process
     //// even exists. Thus, if we blindly swap, we get that annoying kstack error
-    if(highest->state == RUNNABLE) {
+    if (highest->state == RUNNABLE) {
       //// cprintf("Swapping to %s\n", p->name);
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
@@ -483,9 +483,9 @@ void procdump(void) {
 }
 
 struct proc* get_proc(int pid) {
-  for(struct proc* p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-    if(p->state == UNUSED) continue;
-    if(p->pid == pid) return p;
+  for (struct proc* p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if (p->state == UNUSED) continue;
+    if (p->pid == pid) return p;
   }
 
   return 0;
@@ -493,7 +493,7 @@ struct proc* get_proc(int pid) {
 
 int chpr(int pid, int newPrior) {
   struct proc* p = get_proc(pid);
-  if(p == 0) return -1;
+  if (p == 0) return -1;
   p->priority = newPrior;
   return 0;
 }
