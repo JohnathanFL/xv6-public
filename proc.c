@@ -492,8 +492,21 @@ struct proc* get_proc(int pid) {
 }
 
 int chpr(int pid, int newPrior) {
+  if (newPrior > 20 || newPrior < 0) {
+    cprintf("Attempted to set invalid priority!\n");
+    return -1;
+  }
+
   struct proc* p = get_proc(pid);
-  if (p == 0) return -1;
+  if (p == 0) {
+    cprintf("No process with PID %d!\n", pid);
+    return -1;
+  }
+
+  if (p->state != RUNNING && p->state != RUNNABLE) {
+    cprintf("Can only set priority of a Run{ning, able} process!\n");
+    return -1;
+  }
   p->priority = newPrior;
   return 0;
 }
