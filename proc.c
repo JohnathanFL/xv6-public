@@ -490,3 +490,10 @@ struct proc* get_proc(int pid) {
 
   return 0;
 }
+
+int chpr(int pid, int newPrior) {
+  struct proc* p = get_proc(pid);
+  if(p == 0) return -1;
+  p->priority = newPrior;
+  return 0;
+}

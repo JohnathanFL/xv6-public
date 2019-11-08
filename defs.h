@@ -1,4 +1,7 @@
 #pragma once
+
+#include "types.h"
+
 struct buf;
 struct context;
 struct file;
@@ -122,6 +125,7 @@ void         userinit(void);
 int          wait(void);
 void         wakeup(void*);
 void         yield(void);
+int          chpr(int, int);
 
 // swtch.S
 void swtch(struct context**, struct context*);
