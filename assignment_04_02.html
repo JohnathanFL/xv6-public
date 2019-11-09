@@ -1,0 +1,104 @@
+<html>
+  <head>
+    <style>
+* { font-family: "Arial"; }
+code { font-family: "Courier New"; }
+h1, h2, h3 { text-align: center; }
+#images { width: 91vw; text-align: center; }
+img { max-width: 91vw; max-height: 90vh; margin-top: 1vh; }
+    </style>
+  </head>
+  <body>
+    <h1>CSIS 430 OS Assignment 4</h1>
+    <h2>Team 2</h2>
+    <h3>Johnathan Lee<br>Thierry Oke<br>Nirisha Shrestha<br>Santosh Kandel</h3>
+    <br><br>
+    <h4>Algorithm</h4>
+    <p>
+    To allow for priority scheduling, a <code>uint priority</code> field was added to the struct <code>proc</code>. This field is assumed to be (and is later checked as being) from 0...20, inclusive, 
+    where 0 is the lowest priority and 20 the highest.
+    </p>
+
+    <p>
+    Scheduling was implemented with a dead-simple "pick greatest" algorithm. Every time control is returned to the scheduler, it goes through the entire list of processes (all NPROC of them),
+    and finds the one with the highest priority. If there are multiple elements with the same (highest) priority, it will simply take the first in the list.
+    </p>
+
+    <p>
+    In more algorithmic form:
+    <pre><code>
+let highest be the first process in the list
+for each process in the list:
+  if highest isn't runnable or highest's priority is less than the process's:
+    set highest to process
+
+if highest is runnable:
+  switch to highest
+    </code></pre>
+    Note that we explicitly check if highest is runnable. This is because xv6 apparently starts the scheduler before the init process is spawned. 
+    This means there isn't any runnable process (or indeed any process) in the ptable for several iterations.
+    </p>
+
+    <h4>Modifications Made</h4>
+    <p>
+    The following files were modified/created to complete this assignment.<br>
+    Note that <i>all</i> .c/.h files were formatted using clang-format in order to keep everything consistent, so all files are technically different. <br>
+    Also note that .h files have had <code>#pragma once</code> added to them, and some (like user.h) have had include statements for types.h added, as they depend on the types within.
+    <table>
+      <th>File</th> <th>Description</th>
+      <tr><td>Makefile</td> <td>Add cpr/ps/etc as new user programs</td></tr>
+      <tr><td>defs.h</td> <td>Add chpr/cpr/etc prototypes</td></tr>
+      <tr><td>proc.c</td> <td>Add chpr, get_proc, change process output format, and change scheduler algorithm</td></tr>
+      <tr><td>proc.h</td> <td>Add priority field to proc struct</td></tr>
+      <tr><td>syscall.c</td> <td>Add all syscall links</td></tr>
+      <tr><td>syscall.h</td> <td>Add all syscall IDs</td></tr>
+      <tr><td>sysproc.c</td> <td>Add sys_chpr and sys_cps</td></tr>
+      <tr><td>usys.S</td> <td>Add all syscalls</td></tr>
+      <tr><td>user.h</td> <td>Add user-facing prototypes for all syscalls.</td></tr>
+      <tr><td>ps.c</td> <td>Create a simple process shower.</td></tr>
+      <tr><td>myfork.c</td> <td>Create a simple program that calculates a lot of stuff.</td></tr>
+      <tr><td>cpr.c</td> <td>Create a program that changes the priority of the provided PID</td></tr>
+    </table>
+    </p>
+    <h4>Description of Modifications</h4>
+    <h5>Processes and Scheduling</h5>
+    <p>
+      See the algorithm section.
+    </p>
+    <h5>chpr systemcall</h5>
+    <p>
+      <code>chpr</code> takes two arguments: The PID of the process to modify, and the new priority of that process.<br>
+      The priority is checked as being from 0...20, inclusive, and the function will refuse to set the priority if it is not in these bounds.<br>
+      The process is also checked to make sure it's actually in the ptable. If it's not, it refuses to do anything.
+    </p>
+    <h5>cps syscall</h5>
+    <p>
+      <code>cps</code> takes no arguments, and simply calls a modified version of the procdump function.
+    </p>
+    <h5>procdump</h5>
+    <p>
+      The <code>procdump</code> function has been modified to both give a more visually pleasing output and display the priority of each process.
+    </p>
+    <h5>cpr command</h5>
+    <p>
+      The cpr command takes two integer arguments: the PID of the process to modify (obtained through <code>ps</code> or similar), and the new priority of that process.<br>
+      After calling cpr, that process's priority is set to the input priority.
+    </p>
+    <h5>ps command</h5>
+    <p>
+      The ps command takes no arguments, and simply prints a nice list of all processes currently running on the system, their PIDs, priorities, and states.
+    </p>
+    <h4>Observations</h4>
+    <p>
+      This new scheduling algorithm will indeed always pick the highest priority proc to run. This actually becomes a problem if too
+      many myforks are spawned and given priority over other processes, as the algorithm is naive enough that it will just keep picking them over and over again,
+      locking the system until they either exit or are killed.<br>
+      <div id="images">
+      <i>Example of changing of a priority:</i><br> <img src="chpr1.png"><br>
+      <i>Example of error checking in the syscalls:</i><br> <img src="chpr2.png"><br>
+      <i>Example of priority scheduler locking out other processes (final ps output obtained with Ctrl+P):</i><br> <img src="chpr3.png">
+      </div>
+      
+    </p>
+  </body>
+</html>
