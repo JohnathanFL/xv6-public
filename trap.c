@@ -65,7 +65,19 @@ void trap(struct trapframe* tf) {
     cprintf("cpu%d: spurious interrupt at %x:%x\n", cpuid(), tf->cs, tf->eip);
     lapiceoi();
     break;
-
+case T_PGFLT:
+    cprintf("Handling a pagefault\n");
+    uint faultAddr = rcr2();
+    //// Per here: https://wiki.osdev.org/Paging#Page_Faults, bit 0 is the "present in page table" flag.
+    //// Thus if it's not set, we're handling a genuine page fault we need to map.
+    //// PTE_P is the "is this address present" bit in the page table itself.
+    if(!(tf->err & 1) && !(faultAddr & PTE_P)) {
+      //// Per the same article, CR2 contains the address that caused the fault.
+      mappages(myproc()->pgdir, faultAddr, PGSIZE, V2P(faultAddr), PTE_W | PTE_U);
+    } else {
+      cprintf("Page fault where page was present!\n");
+    }
+    break;
   // PAGEBREAK: 13
   default:
     if (myproc() == 0 || (tf->cs & 3) == 0) {
