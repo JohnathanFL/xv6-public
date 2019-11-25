@@ -66,19 +66,24 @@ void trap(struct trapframe* tf) {
     lapiceoi();
     break;
 case T_PGFLT:
-    cprintf("Handling a pagefault\n");
+   ; 
+    //cprintf("Handling a pagefault\n");
     uint faultAddr = rcr2();
     //// Per here: https://wiki.osdev.org/Paging#Page_Faults, bit 0 is the "present in page table" flag.
     //// Thus if it's not set, we're handling a genuine page fault we need to map.
     //// PTE_P is the "is this address present" bit in the page table itself.
-    if(!(tf->err & 1) && !(faultAddr & PTE_P)) {
+    if(!(tf->err & 1)) {
       //// Per the same article, CR2 contains the address that caused the fault.
       handle_pgflt(faultAddr);
     } else {
       cprintf("Page fault where page was present!\n");
-      if (myproc() != 0) { //// Reverse of the default handling
+      cprintf("faultAddr: %d, err: %d\n", faultAddr, tf->err);
+      if (tf->err & 4) { //// Per same article, bit 4 is the "is this a user proc" flag
         cprintf("You've been very naughty, PID%d\n", myproc()->pid);
         myproc()->killed = 1;
+      } else {
+        cprintf("Kernel did something wrong.\n");
+        panic("pagefault");
       }
     }
     break;

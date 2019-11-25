@@ -332,6 +332,7 @@ int copyout(pde_t* pgdir, uint va, void* p, uint len) {
 // Blank page.
 
 void handle_pgflt(uint offender) {
+  //cprintf("Handling pageflt for %d", offender);
   void* newMem = kalloc();
   mappages(myproc()->pgdir, (void*)PGROUNDDOWN(offender), PGSIZE, V2P(newMem), PTE_W | PTE_U);
 }
