@@ -73,7 +73,7 @@ case T_PGFLT:
     //// PTE_P is the "is this address present" bit in the page table itself.
     if(!(tf->err & 1) && !(faultAddr & PTE_P)) {
       //// Per the same article, CR2 contains the address that caused the fault.
-      mappages(myproc()->pgdir, faultAddr, PGSIZE, V2P(faultAddr), PTE_W | PTE_U);
+      handle_pgflt(faultAddr);
     } else {
       cprintf("Page fault where page was present!\n");
     }

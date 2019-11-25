@@ -330,3 +330,8 @@ int copyout(pde_t* pgdir, uint va, void* p, uint len) {
 // Blank page.
 // PAGEBREAK!
 // Blank page.
+
+void handle_pgflt(uint offender) {
+  void* newMem = kalloc();
+  mappages(myproc()->pgdir, (void*)offender, PGSIZE, V2P(newMem), PTE_W | PTE_U);
+}
