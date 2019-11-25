@@ -76,6 +76,10 @@ case T_PGFLT:
       handle_pgflt(faultAddr);
     } else {
       cprintf("Page fault where page was present!\n");
+      if (myproc() != 0) { //// Reverse of the default handling
+        cprintf("You've been very naughty, PID%d\n", myproc()->pid);
+        myproc()->killed = 1;
+      }
     }
     break;
   // PAGEBREAK: 13

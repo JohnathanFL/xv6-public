@@ -333,5 +333,5 @@ int copyout(pde_t* pgdir, uint va, void* p, uint len) {
 
 void handle_pgflt(uint offender) {
   void* newMem = kalloc();
-  mappages(myproc()->pgdir, (void*)offender, PGSIZE, V2P(newMem), PTE_W | PTE_U);
+  mappages(myproc()->pgdir, (void*)PGROUNDDOWN(offender), PGSIZE, V2P(newMem), PTE_W | PTE_U);
 }
