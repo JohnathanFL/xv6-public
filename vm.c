@@ -332,11 +332,6 @@ int copyout(pde_t* pgdir, uint va, void* p, uint len) {
 // Blank page.
 
 void handle_pgflt(uint offender) {
-  //// This shouldn't happen to begin with, but let's check anyway.
-  if (offender >= KERNBASE) {
-    myproc()->killed = 1;
-    return;
-  }
   //cprintf("Handling pageflt for %d", offender);
   void* newMem = kalloc();
   if(newMem == 0) //// Failed to alloc
