@@ -73,8 +73,13 @@ case T_PGFLT:
     //// Thus if it's not set, we're handling a genuine page fault we need to map.
     //// PTE_P is the "is this address present" bit in the page table itself.
     if(!(tf->err & 1)) {
-      //// Per the same article, CR2 contains the address that caused the fault.
-      handle_pgflt(faultAddr);
+      if (faultAddr > myproc()->sz) {
+        cprintf("SEGfault\n");
+        myproc()->killed = 1;
+      } else {
+        //// Per the same article, CR2 contains the address that caused the fault.
+        handle_pgflt(faultAddr);
+      }
     } else {
       cprintf("Page fault where page was present!\n");
       cprintf("faultAddr: %d, err: %d\n", faultAddr, tf->err);
