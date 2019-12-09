@@ -81,9 +81,17 @@ case T_PGFLT:
         handle_pgflt(faultAddr);
       }
     } else {
-      cprintf("Page fault where page was present!\n");
-      cprintf("faultAddr: %d, err: %d\n", faultAddr, tf->err);
+      //cprintf("Page fault where page was present!\n");
+      //cprintf("faultAddr: %d, err: %d\n", faultAddr, tf->err);
+      //// bit 2 is the "were we trying to write to this? flag
+      if(tf->err & 2) {
+        // TODO: Check to make sure the write is in user accessible stuff
+        handle_cow_pgflt(faultAddr);
+        break;
+      }
+      //// If we're here, we were trying to read from some memory
       if (tf->err & 4) { //// Per same article, bit 4 is the "is this a user proc" flag
+        //// We'll assume that if we tried to read from a present pte as a user, we were being wary wary bad wittle wabbits.
         cprintf("You've been very naughty, PID%d\n", myproc()->pid);
         myproc()->killed = 1;
       } else {
