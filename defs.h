@@ -1,3 +1,7 @@
+typedef uint bool;
+#define true 1
+#define false 0
+
 struct buf;
 struct context;
 struct file;
