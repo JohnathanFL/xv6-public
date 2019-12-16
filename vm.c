@@ -229,8 +229,8 @@ int deallocuvm(pde_t* pgdir, uint oldsz, uint newsz) {
     else if ((*pte & PTE_P) != 0) {
       pa = PTE_ADDR(*pte);
       if (pa == 0) panic("kfree");
-      char* v = P2V(pa);
-      kfree(v);
+      ////char* v = P2V(pa);
+      ////kfree(v);
       *pte = 0;
     }
   }
@@ -246,10 +246,12 @@ void freevm(pde_t* pgdir) {
   deallocuvm(pgdir, KERNBASE, 0);
   for (i = 0; i < NPDENTRIES; i++) {
     if (pgdir[i] & PTE_P) {
-      char* v = P2V(PTE_ADDR(pgdir[i]));
-      kfree(v);
+      ////char* v = P2V(PTE_ADDR(pgdir[i]));
+      ////kfree(v);
     }
   }
+  //// This is just freeing the pagedir, which should never be CoW to begin with
+  //// so we can free it.
   kfree((char*)pgdir);
 }
 
@@ -263,32 +265,30 @@ void clearpteu(pde_t* pgdir, char* uva) {
   *pte &= ~PTE_U;
 }
 
-// Given a parent process's page table, create a copy
-// of it for a child.
+// Given a parent process's page table, mark all entries as read only
+// and give them to the child
 pde_t* copyuvm(pde_t* pgdir, uint sz) {
   pde_t* d;
   pte_t* pte;
-  uint   pa, i, flags;
-  char*  mem;
+  uint   i;
+  ////char*  mem;
 
   if ((d = setupkvm()) == 0) return 0;
   for (i = 0; i < sz; i += PGSIZE) {
     if ((pte = walkpgdir(pgdir, (void*)i, 0)) == 0) panic("copyuvm: pte should exist");
     if (!(*pte & PTE_P)) panic("copyuvm: page not present");
-    pa    = PTE_ADDR(*pte);
-    flags = PTE_FLAGS(*pte);
-    if ((mem = kalloc()) == 0) goto bad;
-    memmove(mem, (char*)P2V(pa), PGSIZE);
-    if (mappages(d, (void*)i, PGSIZE, V2P(mem), flags) < 0) {
-      kfree(mem);
-      goto bad;
-    }
-  }
-  return d;
+    *pte &= ~PTE_W; //// Remap our own page without write
 
-bad:
-  freevm(d);
-  return 0;
+    pte_t* childPte = walkpgdir(d, (void*)i, 1);
+    *childPte = *pte; //// Child and parent are the same at this point
+  }
+
+  // Since we just changed our own pagedir, we need to make sure that the processor
+  // sees the change.
+  // Per https://wiki.osdev.org/TLB, the TLB (our pgdir) doesn't immediately see the change.
+  // It can, however, be forced to see it 
+  invlpg((void*)V2P(pgdir));
+  return d;
 }
 
 // PAGEBREAK!
@@ -330,3 +330,27 @@ int copyout(pde_t* pgdir, uint va, void* p, uint len) {
 // Blank page.
 // PAGEBREAK!
 // Blank page.
+
+void handle_cow_pgflt(uint addr) {
+  uint pageAddr = PGROUNDDOWN(addr);
+  pte_t* pte = walkpgdir(myproc()->pgdir, (void*)pageAddr, 0);
+
+
+  void* newMem = kalloc();
+  if(newMem == 0) panic("out of memory");
+
+
+  //// THE PROBLEM: I was trying to use the virtual pageAddr directly.
+  //// This is incorrect, because things may have been remapped already.
+  //// Thus V2P(pageAddr) would point to the *old* version. This would make
+  //// us try to copy the *old* page, which doesn't have any of the stuff our
+  //// parent added to it.
+  //// This problem seems simple, but it's a nightmare.
+  //// If you're finding this code, take note: Check the dumbest possible explanation.
+  //// That will always be the only problem.
+
+  //// Because the old pageAddr is still mapped and _readable_, just copy from it
+  memmove(newMem, P2V(PTE_ADDR(*pte)), PGSIZE);
+
+  *pte = V2P(newMem) | PTE_W | PTE_P | PTE_U;
+}

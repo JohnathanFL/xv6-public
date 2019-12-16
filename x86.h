@@ -7,6 +7,7 @@ static inline uchar inb(ushort port) {
   return data;
 }
 
+
 static inline void insl(int port, void* addr, int cnt) {
   asm volatile("cld; rep insl" : "=D"(addr), "=c"(cnt) : "d"(port), "0"(addr), "1"(cnt) : "memory", "cc");
 }
@@ -80,7 +81,15 @@ static inline uint rcr2(void) {
 }
 
 static inline void lcr3(uint val) { asm volatile("movl %0,%%cr3" : : "r"(val)); }
-
+//// Essentially just the same as lcr3(addr) to begin with, but it'd be nice to have the real
+//// invlpg instruction, so I'll keep the invlpg abstraction
+static inline void invlpg(void* addr) {
+  // Unfortunately, apparently i386 (which is what qemu uses to run xv6)
+  // doesn't support invlpg. Here's yet another annoying bug to find, as it
+  // won't even give an error about it.
+  //asm volatile("invlpg (%0)" : : "r"((uint)addr));
+  lcr3((uint)addr);
+}
 // PAGEBREAK: 36
 // Layout of the trap frame built on the stack by the
 // hardware and by trapasm.S, and passed to trap().

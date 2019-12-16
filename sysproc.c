@@ -31,7 +31,11 @@ int sys_sbrk(void) {
 
   if (argint(0, &n) < 0) return -1;
   addr = myproc()->sz;
-  if (growproc(n) < 0) return -1;
+
+  // If we're deallocating, do it immediately. Otherwise, just add to our size.
+  if(n < 0) {
+    if (growproc(n) < 0) return -1;
+  } else myproc()->sz += n;
   return addr;
 }
 

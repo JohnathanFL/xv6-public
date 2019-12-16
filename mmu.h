@@ -1,4 +1,4 @@
-// This file contains definitions for the
+ // This file contains definitions for the
 // x86 memory management unit (MMU).
 
 // Eflags register

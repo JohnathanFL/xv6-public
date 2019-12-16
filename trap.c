@@ -66,6 +66,24 @@ void trap(struct trapframe* tf) {
     lapiceoi();
     break;
 
+  case T_PGFLT:;
+    uint addr = rcr2();
+    bool isPresent = tf->err & 1 != 0,  //// Was the address we tried to write to present in pagedir?
+        isWriting  = tf->err & 2 != 0,  //// Were we writing to it?
+        isUser     = tf->err & 4 != 0;  //// Were we a user when we did it?
+
+    if(isPresent && isWriting && addr < myproc()->sz && addr < KERNBASE) {
+      cprintf("\nCoW(%d) from proc %d-%s!\n", tf->err, myproc()->pid, myproc()->name);
+      handle_cow_pgflt(addr);
+    } else {
+      ////cprintf("Doing something with a non-present entry (%d)!\n", tf->err);
+      myproc()->killed = 1;
+    }
+
+    isPresent = isWriting = isUser;
+
+    break;
+
   // PAGEBREAK: 13
   default:
     if (myproc() == 0 || (tf->cs & 3) == 0) {
