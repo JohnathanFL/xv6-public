@@ -73,8 +73,12 @@ void trap(struct trapframe* tf) {
         isUser     = (tf->err & 4) != 0;  //// Were we a user when we did it?
 
     if(isPresent && isWriting && addr < myproc()->sz && addr < KERNBASE) {
-      cprintf("\nCoW(%d) from proc %d-%s!\n", tf->err, myproc()->pid, myproc()->name);
+      // Handle CoW page alloc
+      //cprintf("\nCoW(%d) from proc %d-%s!\n", tf->err, myproc()->pid, myproc()->name);
       handle_cow_pgflt(addr);
+    } else if (!isPresent && addr < myproc()->sz && addr < KERNBASE) {
+      // Handle deferred page alloc
+      handle_pgflt(addr);
     } else {
       ////cprintf("Doing something with a non-present entry (%d)!\n", tf->err);
       myproc()->killed = 1;

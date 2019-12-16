@@ -332,25 +332,39 @@ int copyout(pde_t* pgdir, uint va, void* p, uint len) {
 // Blank page.
 
 void handle_cow_pgflt(uint addr) {
+  cprintf("Handling cow fault\n");
   uint pageAddr = PGROUNDDOWN(addr);
   pte_t* pte = walkpgdir(myproc()->pgdir, (void*)pageAddr, 0);
 
 
   void* newMem = kalloc();
-  if(newMem == 0) panic("out of memory");
+  if(newMem == 0) myproc()->killed = true;
+  else {
+    //// THE PROBLEM: I was trying to use the virtual pageAddr directly.
+    //// This is incorrect, because things may have been remapped already.
+    //// Thus V2P(pageAddr) would point to the *old* version. This would make
+    //// us try to copy the *old* page, which doesn't have any of the stuff our
+    //// parent added to it.
+    //// This problem seems simple, but it's a nightmare.
+    //// If you're finding this code, take note: Check the dumbest possible explanation.
+    //// That will always be the only problem.
 
+    //// Because the old pageAddr is still mapped and _readable_, just copy from it
+    memmove(newMem, P2V(PTE_ADDR(*pte)), PGSIZE);
 
-  //// THE PROBLEM: I was trying to use the virtual pageAddr directly.
-  //// This is incorrect, because things may have been remapped already.
-  //// Thus V2P(pageAddr) would point to the *old* version. This would make
-  //// us try to copy the *old* page, which doesn't have any of the stuff our
-  //// parent added to it.
-  //// This problem seems simple, but it's a nightmare.
-  //// If you're finding this code, take note: Check the dumbest possible explanation.
-  //// That will always be the only problem.
+    *pte = V2P(newMem) | PTE_W | PTE_P | PTE_U;
+  }
+}
 
-  //// Because the old pageAddr is still mapped and _readable_, just copy from it
-  memmove(newMem, P2V(PTE_ADDR(*pte)), PGSIZE);
-
-  *pte = V2P(newMem) | PTE_W | PTE_P | PTE_U;
+void handle_pgflt(uint addr) {
+  cprintf("Handling deferred fault\n");
+  uint pageAddr = PGROUNDDOWN(addr);
+  // walkpgdir with true because we don't know if this pte even exists yet.
+  pte_t* pte = walkpgdir(myproc()->pgdir, (void*)pageAddr, true);
+  void* newMem = kalloc();
+  if(newMem == 0)
+    myproc()->killed = true;
+  else {
+    *pte = (uint)P2V(newMem) | PTE_W | PTE_U | PTE_P;
+  }
 }
