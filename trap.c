@@ -68,9 +68,9 @@ void trap(struct trapframe* tf) {
 
   case T_PGFLT:;
     uint addr = rcr2();
-    bool isPresent = tf->err & 1 != 0,  //// Was the address we tried to write to present in pagedir?
-        isWriting  = tf->err & 2 != 0,  //// Were we writing to it?
-        isUser     = tf->err & 4 != 0;  //// Were we a user when we did it?
+    bool isPresent = (tf->err & 1) != 0,  //// Was the address we tried to write to present in pagedir?
+        isWriting  = (tf->err & 2) != 0,  //// Were we writing to it?
+        isUser     = (tf->err & 4) != 0;  //// Were we a user when we did it?
 
     if(isPresent && isWriting && addr < myproc()->sz && addr < KERNBASE) {
       cprintf("\nCoW(%d) from proc %d-%s!\n", tf->err, myproc()->pid, myproc()->name);
