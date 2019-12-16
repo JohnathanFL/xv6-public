@@ -277,16 +277,16 @@ pde_t* copyuvm(pde_t* pgdir, uint sz) {
   for (i = 0; i < sz; i += PGSIZE) {
     if ((pte = walkpgdir(pgdir, (void*)i, 0)) == 0) panic("copyuvm: pte should exist");
     if (!(*pte & PTE_P)) panic("copyuvm: page not present");
-    *pte &= ~PTE_W; //// Remap our own page without write
+    *pte &= ~PTE_W;  //// Remap our own page without write
 
     pte_t* childPte = walkpgdir(d, (void*)i, 1);
-    *childPte = *pte; //// Child and parent are the same at this point
+    *childPte       = *pte;  //// Child and parent are the same at this point
   }
 
   // Since we just changed our own pagedir, we need to make sure that the processor
   // sees the change.
   // Per https://wiki.osdev.org/TLB, the TLB (our pgdir) doesn't immediately see the change.
-  // It can, however, be forced to see it 
+  // It can, however, be forced to see it
   invlpg((void*)V2P(pgdir));
   return d;
 }
@@ -333,12 +333,13 @@ int copyout(pde_t* pgdir, uint va, void* p, uint len) {
 
 void handle_cow_pgflt(uint addr) {
   cprintf("Handling cow fault\n");
-  uint pageAddr = PGROUNDDOWN(addr);
-  pte_t* pte = walkpgdir(myproc()->pgdir, (void*)pageAddr, 0);
+  uint   pageAddr = PGROUNDDOWN(addr);
+  pte_t* pte      = walkpgdir(myproc()->pgdir, (void*)pageAddr, 0);
 
 
   void* newMem = kalloc();
-  if(newMem == 0) myproc()->killed = true;
+  if (newMem == 0)
+    myproc()->killed = true;
   else {
     //// THE PROBLEM: I was trying to use the virtual pageAddr directly.
     //// This is incorrect, because things may have been remapped already.
@@ -360,9 +361,9 @@ void handle_pgflt(uint addr) {
   cprintf("Handling deferred fault\n");
   uint pageAddr = PGROUNDDOWN(addr);
   // walkpgdir with true because we don't know if this pte even exists yet.
-  pte_t* pte = walkpgdir(myproc()->pgdir, (void*)pageAddr, true);
-  void* newMem = kalloc();
-  if(newMem == 0)
+  pte_t* pte    = walkpgdir(myproc()->pgdir, (void*)pageAddr, true);
+  void*  newMem = kalloc();
+  if (newMem == 0)
     myproc()->killed = true;
   else {
     *pte = (uint)P2V(newMem) | PTE_W | PTE_U | PTE_P;

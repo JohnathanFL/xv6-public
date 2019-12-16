@@ -87,7 +87,7 @@ static inline void invlpg(void* addr) {
   // Unfortunately, apparently i386 (which is what qemu uses to run xv6)
   // doesn't support invlpg. Here's yet another annoying bug to find, as it
   // won't even give an error about it.
-  //asm volatile("invlpg (%0)" : : "r"((uint)addr));
+  // asm volatile("invlpg (%0)" : : "r"((uint)addr));
   lcr3((uint)addr);
 }
 // PAGEBREAK: 36

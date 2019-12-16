@@ -67,14 +67,14 @@ void trap(struct trapframe* tf) {
     break;
 
   case T_PGFLT:;
-    uint addr = rcr2();
+    uint addr      = rcr2();
     bool isPresent = (tf->err & 1) != 0,  //// Was the address we tried to write to present in pagedir?
         isWriting  = (tf->err & 2) != 0,  //// Were we writing to it?
         isUser     = (tf->err & 4) != 0;  //// Were we a user when we did it?
 
-    if(isPresent && isWriting && addr < myproc()->sz && addr < KERNBASE) {
+    if (isPresent && isWriting && addr < myproc()->sz && addr < KERNBASE) {
       // Handle CoW page alloc
-      //cprintf("\nCoW(%d) from proc %d-%s!\n", tf->err, myproc()->pid, myproc()->name);
+      // cprintf("\nCoW(%d) from proc %d-%s!\n", tf->err, myproc()->pid, myproc()->name);
       handle_cow_pgflt(addr);
     } else if (!isPresent && addr < myproc()->sz && addr < KERNBASE) {
       // Handle deferred page alloc
