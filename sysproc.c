@@ -10,6 +10,7 @@
 int sys_fork(void) { return fork(); }
 
 int sys_exit(void) {
+  cprintf("Exiting from %s\n", myproc()->name);
   exit();
   return 0;  // not reached
 }

@@ -76,11 +76,11 @@ void trap(struct trapframe* tf) {
       // Handle CoW page alloc
       // cprintf("\nCoW(%d) from proc %d-%s!\n", tf->err, myproc()->pid, myproc()->name);
       handle_cow_pgflt(addr);
-    } else if (!isPresent && addr < myproc()->sz && addr < KERNBASE) {
+    } else if (!isPresent) {
       // Handle deferred page alloc
       handle_pgflt(addr);
     } else {
-      ////cprintf("Doing something with a non-present entry (%d)!\n", tf->err);
+      cprintf("Doing something with a non-present entry (%d)(%d)!\n", tf->err, addr);
       myproc()->killed = 1;
     }
 

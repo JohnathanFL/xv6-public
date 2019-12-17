@@ -276,7 +276,7 @@ pde_t* copyuvm(pde_t* pgdir, uint sz) {
   if ((d = setupkvm()) == 0) return 0;
   for (i = 0; i < sz; i += PGSIZE) {
     if ((pte = walkpgdir(pgdir, (void*)i, 0)) == 0) panic("copyuvm: pte should exist");
-    if (!(*pte & PTE_P)) panic("copyuvm: page not present");
+    ////if (!(*pte & PTE_P)) panic("copyuvm: page not present"); //// Since we have deferred page alloc
     *pte &= ~PTE_W;  //// Remap our own page without write
 
     pte_t* childPte = walkpgdir(d, (void*)i, 1);
